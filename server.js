@@ -1,12 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
+const helmet = require("helmet");
+const cors = require("cors");
+const MOVIES = require("./movies-data-small.json");
 
 console.log(process.env.API_TOKEN);
 
 const app = express();
 
 app.use(morgan("dev"));
+app.use(helmet());
+app.use(cors());
+
 app.use(validateBearerToken);
 
 function validateBearerToken(req, res, next) {
@@ -19,14 +25,11 @@ function validateBearerToken(req, res, next) {
 }
 
 app.get("/movie", (req, res) => {
-  let movies = [
-    { title: "Karate Kid", genre: "Action", country: "USA" },
-    { title: "Karate Kid 2", genre: "Romance", country: "USA" },
-  ];
+  // let response = MOVIES;
 
-  const validGenres = [...new Set(movies.map((m) => m.genre))];
+  const validGenres = [...new Set(MOVIES.map((m) => m.genre))];
 
-  let results = movies;
+  let results = MOVIES;
 
   if (req.query.genre && !validGenres.includes(req.query.genre)) {
     res.status(400).json({ error: "Invalid Genre" });
@@ -41,7 +44,9 @@ app.get("/movie", (req, res) => {
   }
 
   if (req.query.avg_vote) {
-    results = results.filter((m) => m.avg_vote >= req.query.avg_vote);
+    results = results.filter(
+      (m) => Number(m.avg_vote) >= Number(req.query.avg_vote)
+    );
   }
 
   res.json(results);
